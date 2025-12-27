@@ -1,0 +1,4 @@
+baseURL = 'https://s7fy.net/'
+languageCode = 'ja'
+title = "s7fy's blog"
+theme = 'hugo-theme-m10c'
