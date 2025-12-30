@@ -11,8 +11,6 @@ publishDir = "docs"
 [params]
   mode = "dark"
   subtitle = "Yuruhuwa Develop"
-  mathjax = true
-  katex = true
 
 
 # Social Tags
