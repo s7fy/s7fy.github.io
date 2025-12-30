@@ -1,0 +1,51 @@
+baseURL = 'https://s7fy.net/'
+languageCode = 'ja'
+title = "s7fy's blog"
+theme = "archie"
+publishDir = "docs"
+
+
+[pagination]
+  pagerSize = 3
+
+[params]
+  mode = "dark"
+  subtitle = "Yuruhuwa Develop"
+  mathjax = true
+  katex = true
+
+
+# Social Tags
+
+[[params.social]]
+  name = "GitHub"
+  icon = "github"
+  url = "https://github.com/s7fy/"
+
+[[params.social]]
+  name = "Twitter"
+  icon = "twitter"
+  url = "https://x.com/s7fyatdesk/"
+
+
+# Main mehu Items
+
+[[menu.main]]
+  name = "Home"
+  url = "/"
+  weight = 1
+ 
+[[menu.main]]
+  name = "All posts"
+  url = "/posts"
+  weight = 2
+
+[[menu.main]]
+  name = "About"
+  url = "/about"
+  weight = 3
+
+[[menu.main]]
+  name = "Tags"
+  url = "/tags"
+  weight = 4
