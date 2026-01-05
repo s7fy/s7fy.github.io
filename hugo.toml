@@ -9,6 +9,7 @@ publishDir = "docs"
   pagerSize = 3
 
 [params]
+  favicon = "img/favicon.ico"
   mode = "dark"
   subtitle = "Yuruhuwa Develop"
 
