@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>s7fy&#39;s blog</title>
-    <link>https://s7fy.net/</link>
-    <description>Recent content on s7fy&#39;s blog</description>
+    <title>2025-12 on s7fy&#39;s blog</title>
+    <link>https://s7fy.net/tags/2025-12/</link>
+    <description>Recent content in 2025-12 on s7fy&#39;s blog</description>
     <generator>Hugo</generator>
     <language>ja</language>
     <lastBuildDate>Wed, 31 Dec 2025 05:26:05 +0900</lastBuildDate>
-    <atom:link href="https://s7fy.net/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://s7fy.net/tags/2025-12/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Helloworld</title>
       <link>https://s7fy.net/posts/helloworld/</link>
