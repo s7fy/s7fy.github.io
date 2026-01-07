@@ -8,7 +8,8 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-POST="/Users/s7fy/blog/content/posts/$1.md"
+POST_DIR="/Users/s7fy/blog/content/posts/$1"
+POST="$POST_DIR/index.md"
 
 DATE=$(date "+%Y-%m-%dT%H:%M:%S+09:00")
 TAG_Y=$(date "+%Y")
@@ -18,6 +19,8 @@ if [ -e "$POST" ]; then
   echo "already exists: $POST"
   exit 1
 fi
+
+mkdir -p "$POST_DIR"
 
 cat <<EOF > "$POST"
 +++

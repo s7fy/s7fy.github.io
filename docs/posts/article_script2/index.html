@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html><head lang="en">
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>article_script2 - s7fy&#39;s blog</title><link rel="icon" type="image/png" href=img/favicon.ico /><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="メディアやコールアウトの挿入を楽にしよう！！
+このブログで使用しているテーマでは、各種メディアとコールアウトをサポートしています。
+
+画像
+Github Gist
+Youtube
+X Post(Tweet)
+Vimeo
+Instagram
+コールアウト
+
+嬉しい機能ですが、マークダウンで記述する性質上、ショートコードを覚えている必要があり、めんどくさいのです。
+そこで、またスクリプトを用意しました。
+
+import argparse
+import shutil
+import re
+from pathlib import Path
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description=&#34;Insert media into article&#34;
+    )
+
+    parser.add_argument(&#34;article_name&#34;, help=&#34;Target article name&#34;)
+
+    subparsers = parser.add_subparsers(
+        dest=&#34;mode&#34;,
+        required=True
+    )
+
+    # picture
+    pic = subparsers.add_parser(&#34;picture&#34;, help=&#34;Insert picture&#34;)
+    pic.add_argument(&#34;picture_name&#34;, help=&#34;Picture file name&#34;)
+    pic.add_argument(&#34;-l&#34;, &#34;--line&#34;, type=int, required=True)
+
+    # callout
+    callout = subparsers.add_parser(&#34;callout&#34;, help=&#34;Insert callout&#34;)
+    callout.add_argument(
+        &#34;callout_type&#34;,
+        choices=[&#34;alert&#34;, &#34;warning&#34;, &#34;tip&#34;],
+        help=&#34;Callout type&#34;
+    )
+    callout.add_argument(&#34;-l&#34;, &#34;--line&#34;, type=int, required=True)
+
+    # youtube
+    yt = subparsers.add_parser(&#34;youtube&#34;, help=&#34;Insert YouTube embed&#34;)
+    yt.add_argument(&#34;url&#34;, help=&#34;YouTube URL&#34;)
+    yt.add_argument(&#34;-l&#34;, &#34;--line&#34;, type=int, required=True)
+
+    # tweet
+    tw = subparsers.add_parser(&#34;tweet&#34;, help=&#34;Insert tweet embed&#34;)
+    tw.add_argument(&#34;url&#34;, help=&#34;Tweet URL&#34;)
+    tw.add_argument(&#34;-l&#34;, &#34;--line&#34;, type=int, required=True)
+
+    args = parser.parse_args()
+    handle(args)
+
+
+def handle(args):
+    article_path = resolve_article(args.article_name)
+
+    insert_text = build_insert_text(args)
+    new_content = insert_at_line(article_path, insert_text, args.line)
+
+    safe_write(article_path, new_content)
+
+    print(f&#34;Inserted {args.mode} into {article_path} at line {args.line}&#34;)
+
+
+# --------------- #
+# Core functions  #
+# --------------- #
+
+def resolve_article(article_name: str) -&gt; Path:
+    candidates = [
+        Path(f&#34;/yout/path/content/posts/{article_name}/index.md&#34;)
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    raise FileNotFoundError(&#34;Article not found&#34;)
+
+
+def insert_at_line(path: Path, insert_text: str, line_no: int) -&gt; str:
+    lines = path.read_text(encoding=&#34;utf-8&#34;).splitlines(keepends=True)
+
+    if line_no &lt; 1 or line_no &gt; len(lines) &#43; 1:
+        raise ValueError(&#34;line number out of range&#34;)
+
+    lines.insert(line_no - 1, insert_text &#43; &#34;\n&#34;)
+    return &#34;&#34;.join(lines)
+
+
+def safe_write(path: Path, new_content: str):
+    backup = path.with_suffix(path.suffix &#43; &#34;.bak&#34;)
+    tmp = path.with_suffix(path.suffix &#43; &#34;.tmp&#34;)
+
+    shutil.copy2(path, backup)
+    tmp.write_text(new_content, encoding=&#34;utf-8&#34;)
+    tmp.replace(path)
+
+
+def build_insert_text(args) -&gt; str:
+    if args.mode == &#34;picture&#34;:
+        return f&#39;{{{{&lt; figure src=&#34;{args.picture_name}&#34; title=&#34;&#34; &gt;}}}}&#39;
+
+    if args.mode == &#34;callout&#34;:
+        return f&#39;{{{{&lt; callout type=&#34;{args.callout_type}&#34; text=&#34;&#34; &gt;}}}}\n&#39; # {{&lt; callout type=&#34;alert&#34; text=&#34;&#34; &gt;}}
+
+
+    if args.mode == &#34;youtube&#34;:
+        video_id = extract_youtube_id(args.url)
+        return f&#39;{{{{&lt; youtube {video_id} &gt;}}}}&#39; # https://www.youtube.com/watch?v=w7Ft2ymGmfc → w7Ft2ymGmfc
+
+    if args.mode == &#34;tweet&#34;:
+        tweet_id = extract_tweet_id(args.url)
+        return f&#39;{{{{&lt; tweet {tweet_id} &gt;}}}}&#39; # https://x.com/GoHugoIO/status/877500564405444608 → user=&#34;GoHugoIO&#34; id=&#34;877500564405444608&#34;
+
+    raise ValueError(&#34;Unknown mode&#34;)
+
+
+def extract_youtube_id(url: str) -&gt; str:
+
+    m = re.search(r&#34;v=([^&amp;]&#43;)&#34;, url)
+    if m:
+        return m.group(1)
+    raise ValueError(&#34;Invalid YouTube URL&#34;)
+
+def extract_tweet_id(url: str) -&gt; str:
+    m = re.search(r&#34;https://x\.com/([^/]&#43;)/status/([0-9]&#43;)&#34;, url)
+    if m:
+        user = f&#39;user=&#34;{m.group(1)}&#34;&#39;
+        tweet_id = f&#39;id=&#34;{m.group(2)}&#34;&#39;
+        tweet = f&#34;{user} {tweet_id}&#34;
+        return tweet
+
+    raise ValueError(&#34;Invalid tweet URL&#34;)
+
+
+
+
+if __name__ == &#34;__main__&#34;:
+    main()
+主に使う機能として" />
+	<meta property="og:image" content=""/>
+	<meta property="og:url" content="https://s7fy.net/posts/article_script2/">
+  <meta property="og:site_name" content="s7fy&#39;s blog">
+  <meta property="og:title" content="article_script2">
+  <meta property="og:description" content="メディアやコールアウトの挿入を楽にしよう！！ このブログで使用しているテーマでは、各種メディアとコールアウトをサポートしています。
+画像 Github Gist Youtube X Post(Tweet) Vimeo Instagram コールアウト 嬉しい機能ですが、マークダウンで記述する性質上、ショートコードを覚えている必要があり、めんどくさいのです。 そこで、またスクリプトを用意しました。
+import argparse import shutil import re from pathlib import Path def main(): parser = argparse.ArgumentParser( description=&#34;Insert media into article&#34; ) parser.add_argument(&#34;article_name&#34;, help=&#34;Target article name&#34;) subparsers = parser.add_subparsers( dest=&#34;mode&#34;, required=True ) # picture pic = subparsers.add_parser(&#34;picture&#34;, help=&#34;Insert picture&#34;) pic.add_argument(&#34;picture_name&#34;, help=&#34;Picture file name&#34;) pic.add_argument(&#34;-l&#34;, &#34;--line&#34;, type=int, required=True) # callout callout = subparsers.add_parser(&#34;callout&#34;, help=&#34;Insert callout&#34;) callout.add_argument( &#34;callout_type&#34;, choices=[&#34;alert&#34;, &#34;warning&#34;, &#34;tip&#34;], help=&#34;Callout type&#34; ) callout.add_argument(&#34;-l&#34;, &#34;--line&#34;, type=int, required=True) # youtube yt = subparsers.add_parser(&#34;youtube&#34;, help=&#34;Insert YouTube embed&#34;) yt.add_argument(&#34;url&#34;, help=&#34;YouTube URL&#34;) yt.add_argument(&#34;-l&#34;, &#34;--line&#34;, type=int, required=True) # tweet tw = subparsers.add_parser(&#34;tweet&#34;, help=&#34;Insert tweet embed&#34;) tw.add_argument(&#34;url&#34;, help=&#34;Tweet URL&#34;) tw.add_argument(&#34;-l&#34;, &#34;--line&#34;, type=int, required=True) args = parser.parse_args() handle(args) def handle(args): article_path = resolve_article(args.article_name) insert_text = build_insert_text(args) new_content = insert_at_line(article_path, insert_text, args.line) safe_write(article_path, new_content) print(f&#34;Inserted {args.mode} into {article_path} at line {args.line}&#34;) # --------------- # # Core functions # # --------------- # def resolve_article(article_name: str) -&gt; Path: candidates = [ Path(f&#34;/yout/path/content/posts/{article_name}/index.md&#34;) ] for p in candidates: if p.exists(): return p raise FileNotFoundError(&#34;Article not found&#34;) def insert_at_line(path: Path, insert_text: str, line_no: int) -&gt; str: lines = path.read_text(encoding=&#34;utf-8&#34;).splitlines(keepends=True) if line_no &lt; 1 or line_no &gt; len(lines) &#43; 1: raise ValueError(&#34;line number out of range&#34;) lines.insert(line_no - 1, insert_text &#43; &#34;\n&#34;) return &#34;&#34;.join(lines) def safe_write(path: Path, new_content: str): backup = path.with_suffix(path.suffix &#43; &#34;.bak&#34;) tmp = path.with_suffix(path.suffix &#43; &#34;.tmp&#34;) shutil.copy2(path, backup) tmp.write_text(new_content, encoding=&#34;utf-8&#34;) tmp.replace(path) def build_insert_text(args) -&gt; str: if args.mode == &#34;picture&#34;: return f&#39;{{{{&lt; figure src=&#34;{args.picture_name}&#34; title=&#34;&#34; &gt;}}}}&#39; if args.mode == &#34;callout&#34;: return f&#39;{{{{&lt; callout type=&#34;{args.callout_type}&#34; text=&#34;&#34; &gt;}}}}\n&#39; # {{&lt; callout type=&#34;alert&#34; text=&#34;&#34; &gt;}} if args.mode == &#34;youtube&#34;: video_id = extract_youtube_id(args.url) return f&#39;{{{{&lt; youtube {video_id} &gt;}}}}&#39; # https://www.youtube.com/watch?v=w7Ft2ymGmfc → w7Ft2ymGmfc if args.mode == &#34;tweet&#34;: tweet_id = extract_tweet_id(args.url) return f&#39;{{{{&lt; tweet {tweet_id} &gt;}}}}&#39; # https://x.com/GoHugoIO/status/877500564405444608 → user=&#34;GoHugoIO&#34; id=&#34;877500564405444608&#34; raise ValueError(&#34;Unknown mode&#34;) def extract_youtube_id(url: str) -&gt; str: m = re.search(r&#34;v=([^&amp;]&#43;)&#34;, url) if m: return m.group(1) raise ValueError(&#34;Invalid YouTube URL&#34;) def extract_tweet_id(url: str) -&gt; str: m = re.search(r&#34;https://x\.com/([^/]&#43;)/status/([0-9]&#43;)&#34;, url) if m: user = f&#39;user=&#34;{m.group(1)}&#34;&#39; tweet_id = f&#39;id=&#34;{m.group(2)}&#34;&#39; tweet = f&#34;{user} {tweet_id}&#34; return tweet raise ValueError(&#34;Invalid tweet URL&#34;) if __name__ == &#34;__main__&#34;: main() 主に使う機能として">
+  <meta property="og:locale" content="ja">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2026-01-07T23:51:33+09:00">
+    <meta property="article:modified_time" content="2026-01-07T23:51:33+09:00">
+    <meta property="article:tag" content="2026">
+    <meta property="article:tag" content="2026-01">
+    <meta property="article:tag" content="Script">
+    <meta property="article:tag" content="Shortcode">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="article_script2">
+  <meta name="twitter:description" content="メディアやコールアウトの挿入を楽にしよう！！ このブログで使用しているテーマでは、各種メディアとコールアウトをサポートしています。
+画像 Github Gist Youtube X Post(Tweet) Vimeo Instagram コールアウト 嬉しい機能ですが、マークダウンで記述する性質上、ショートコードを覚えている必要があり、めんどくさいのです。 そこで、またスクリプトを用意しました。
+import argparse import shutil import re from pathlib import Path def main(): parser = argparse.ArgumentParser( description=&#34;Insert media into article&#34; ) parser.add_argument(&#34;article_name&#34;, help=&#34;Target article name&#34;) subparsers = parser.add_subparsers( dest=&#34;mode&#34;, required=True ) # picture pic = subparsers.add_parser(&#34;picture&#34;, help=&#34;Insert picture&#34;) pic.add_argument(&#34;picture_name&#34;, help=&#34;Picture file name&#34;) pic.add_argument(&#34;-l&#34;, &#34;--line&#34;, type=int, required=True) # callout callout = subparsers.add_parser(&#34;callout&#34;, help=&#34;Insert callout&#34;) callout.add_argument( &#34;callout_type&#34;, choices=[&#34;alert&#34;, &#34;warning&#34;, &#34;tip&#34;], help=&#34;Callout type&#34; ) callout.add_argument(&#34;-l&#34;, &#34;--line&#34;, type=int, required=True) # youtube yt = subparsers.add_parser(&#34;youtube&#34;, help=&#34;Insert YouTube embed&#34;) yt.add_argument(&#34;url&#34;, help=&#34;YouTube URL&#34;) yt.add_argument(&#34;-l&#34;, &#34;--line&#34;, type=int, required=True) # tweet tw = subparsers.add_parser(&#34;tweet&#34;, help=&#34;Insert tweet embed&#34;) tw.add_argument(&#34;url&#34;, help=&#34;Tweet URL&#34;) tw.add_argument(&#34;-l&#34;, &#34;--line&#34;, type=int, required=True) args = parser.parse_args() handle(args) def handle(args): article_path = resolve_article(args.article_name) insert_text = build_insert_text(args) new_content = insert_at_line(article_path, insert_text, args.line) safe_write(article_path, new_content) print(f&#34;Inserted {args.mode} into {article_path} at line {args.line}&#34;) # --------------- # # Core functions # # --------------- # def resolve_article(article_name: str) -&gt; Path: candidates = [ Path(f&#34;/yout/path/content/posts/{article_name}/index.md&#34;) ] for p in candidates: if p.exists(): return p raise FileNotFoundError(&#34;Article not found&#34;) def insert_at_line(path: Path, insert_text: str, line_no: int) -&gt; str: lines = path.read_text(encoding=&#34;utf-8&#34;).splitlines(keepends=True) if line_no &lt; 1 or line_no &gt; len(lines) &#43; 1: raise ValueError(&#34;line number out of range&#34;) lines.insert(line_no - 1, insert_text &#43; &#34;\n&#34;) return &#34;&#34;.join(lines) def safe_write(path: Path, new_content: str): backup = path.with_suffix(path.suffix &#43; &#34;.bak&#34;) tmp = path.with_suffix(path.suffix &#43; &#34;.tmp&#34;) shutil.copy2(path, backup) tmp.write_text(new_content, encoding=&#34;utf-8&#34;) tmp.replace(path) def build_insert_text(args) -&gt; str: if args.mode == &#34;picture&#34;: return f&#39;{{{{&lt; figure src=&#34;{args.picture_name}&#34; title=&#34;&#34; &gt;}}}}&#39; if args.mode == &#34;callout&#34;: return f&#39;{{{{&lt; callout type=&#34;{args.callout_type}&#34; text=&#34;&#34; &gt;}}}}\n&#39; # {{&lt; callout type=&#34;alert&#34; text=&#34;&#34; &gt;}} if args.mode == &#34;youtube&#34;: video_id = extract_youtube_id(args.url) return f&#39;{{{{&lt; youtube {video_id} &gt;}}}}&#39; # https://www.youtube.com/watch?v=w7Ft2ymGmfc → w7Ft2ymGmfc if args.mode == &#34;tweet&#34;: tweet_id = extract_tweet_id(args.url) return f&#39;{{{{&lt; tweet {tweet_id} &gt;}}}}&#39; # https://x.com/GoHugoIO/status/877500564405444608 → user=&#34;GoHugoIO&#34; id=&#34;877500564405444608&#34; raise ValueError(&#34;Unknown mode&#34;) def extract_youtube_id(url: str) -&gt; str: m = re.search(r&#34;v=([^&amp;]&#43;)&#34;, url) if m: return m.group(1) raise ValueError(&#34;Invalid YouTube URL&#34;) def extract_tweet_id(url: str) -&gt; str: m = re.search(r&#34;https://x\.com/([^/]&#43;)/status/([0-9]&#43;)&#34;, url) if m: user = f&#39;user=&#34;{m.group(1)}&#34;&#39; tweet_id = f&#39;id=&#34;{m.group(2)}&#34;&#39; tweet = f&#34;{user} {tweet_id}&#34; return tweet raise ValueError(&#34;Invalid tweet URL&#34;) if __name__ == &#34;__main__&#34;: main() 主に使う機能として">
+
+        <link href="https://s7fy.net/css/fonts.2c2227b81b1970a03e760aa2e6121cd01f87c88586803cbb282aa224720a765f.css" rel="stylesheet">
+	
+
+	
+	<link rel="stylesheet" type="text/css" media="screen" href="https://s7fy.net/css/main.7a5c05040394322612a2d98397e9932aa81d9d7acc70199463e79f8180c8e0c0.css" />
+		<link id="darkModeStyle" rel="stylesheet" type="text/css" href="https://s7fy.net/css/dark.478e7f2b9cf8d87be42edfd9fe1810beab1331847df94b1b430478b309f28282.css"   />
+</head>
+<body>
+        <div class="content"><header>
+	<div class="main">
+		<a href="https://s7fy.net/">s7fy&#39;s blog</a>
+	</div>
+	<nav>
+		
+		<a href="/">Home</a>
+		
+		<a href="/posts">All posts</a>
+		
+		<a href="/tags">Tags</a>
+		
+		
+	</nav>
+</header>
+
+<main>
+  <article>
+    <div class="post-container">
+      
+      <div class="post-content">
+        <div class="title">
+          <h1 class="title">article_script2</h1>
+          <div class="meta">Posted on Jan 7, 2026</div>
+          
+        </div>
+        
+        <section class="body">
+          <h1 id="メディアやコールアウトの挿入を楽にしよう">メディアやコールアウトの挿入を楽にしよう！！</h1>
+<p>このブログで使用しているテーマでは、各種メディアとコールアウトをサポートしています。</p>
+<ul>
+<li>画像</li>
+<li>Github Gist</li>
+<li>Youtube</li>
+<li>X Post(Tweet)</li>
+<li>Vimeo</li>
+<li>Instagram</li>
+<li>コールアウト</li>
+</ul>
+<p>嬉しい機能ですが、マークダウンで記述する性質上、ショートコードを覚えている必要があり、めんどくさいのです。
+そこで、またスクリプトを用意しました。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> argparse
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> shutil
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> re
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> pathlib <span style="color:#f92672">import</span> Path
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">main</span>():
+</span></span><span style="display:flex;"><span>    parser <span style="color:#f92672">=</span> argparse<span style="color:#f92672">.</span>ArgumentParser(
+</span></span><span style="display:flex;"><span>        description<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Insert media into article&#34;</span>
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    parser<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;article_name&#34;</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Target article name&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    subparsers <span style="color:#f92672">=</span> parser<span style="color:#f92672">.</span>add_subparsers(
+</span></span><span style="display:flex;"><span>        dest<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;mode&#34;</span>,
+</span></span><span style="display:flex;"><span>        required<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># picture</span>
+</span></span><span style="display:flex;"><span>    pic <span style="color:#f92672">=</span> subparsers<span style="color:#f92672">.</span>add_parser(<span style="color:#e6db74">&#34;picture&#34;</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Insert picture&#34;</span>)
+</span></span><span style="display:flex;"><span>    pic<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;picture_name&#34;</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Picture file name&#34;</span>)
+</span></span><span style="display:flex;"><span>    pic<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;-l&#34;</span>, <span style="color:#e6db74">&#34;--line&#34;</span>, type<span style="color:#f92672">=</span>int, required<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># callout</span>
+</span></span><span style="display:flex;"><span>    callout <span style="color:#f92672">=</span> subparsers<span style="color:#f92672">.</span>add_parser(<span style="color:#e6db74">&#34;callout&#34;</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Insert callout&#34;</span>)
+</span></span><span style="display:flex;"><span>    callout<span style="color:#f92672">.</span>add_argument(
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;callout_type&#34;</span>,
+</span></span><span style="display:flex;"><span>        choices<span style="color:#f92672">=</span>[<span style="color:#e6db74">&#34;alert&#34;</span>, <span style="color:#e6db74">&#34;warning&#34;</span>, <span style="color:#e6db74">&#34;tip&#34;</span>],
+</span></span><span style="display:flex;"><span>        help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Callout type&#34;</span>
+</span></span><span style="display:flex;"><span>    )
+</span></span><span style="display:flex;"><span>    callout<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;-l&#34;</span>, <span style="color:#e6db74">&#34;--line&#34;</span>, type<span style="color:#f92672">=</span>int, required<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># youtube</span>
+</span></span><span style="display:flex;"><span>    yt <span style="color:#f92672">=</span> subparsers<span style="color:#f92672">.</span>add_parser(<span style="color:#e6db74">&#34;youtube&#34;</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Insert YouTube embed&#34;</span>)
+</span></span><span style="display:flex;"><span>    yt<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;url&#34;</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;YouTube URL&#34;</span>)
+</span></span><span style="display:flex;"><span>    yt<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;-l&#34;</span>, <span style="color:#e6db74">&#34;--line&#34;</span>, type<span style="color:#f92672">=</span>int, required<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># tweet</span>
+</span></span><span style="display:flex;"><span>    tw <span style="color:#f92672">=</span> subparsers<span style="color:#f92672">.</span>add_parser(<span style="color:#e6db74">&#34;tweet&#34;</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Insert tweet embed&#34;</span>)
+</span></span><span style="display:flex;"><span>    tw<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;url&#34;</span>, help<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Tweet URL&#34;</span>)
+</span></span><span style="display:flex;"><span>    tw<span style="color:#f92672">.</span>add_argument(<span style="color:#e6db74">&#34;-l&#34;</span>, <span style="color:#e6db74">&#34;--line&#34;</span>, type<span style="color:#f92672">=</span>int, required<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    args <span style="color:#f92672">=</span> parser<span style="color:#f92672">.</span>parse_args()
+</span></span><span style="display:flex;"><span>    handle(args)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">handle</span>(args):
+</span></span><span style="display:flex;"><span>    article_path <span style="color:#f92672">=</span> resolve_article(args<span style="color:#f92672">.</span>article_name)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    insert_text <span style="color:#f92672">=</span> build_insert_text(args)
+</span></span><span style="display:flex;"><span>    new_content <span style="color:#f92672">=</span> insert_at_line(article_path, insert_text, args<span style="color:#f92672">.</span>line)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    safe_write(article_path, new_content)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;Inserted </span><span style="color:#e6db74">{</span>args<span style="color:#f92672">.</span>mode<span style="color:#e6db74">}</span><span style="color:#e6db74"> into </span><span style="color:#e6db74">{</span>article_path<span style="color:#e6db74">}</span><span style="color:#e6db74"> at line </span><span style="color:#e6db74">{</span>args<span style="color:#f92672">.</span>line<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># --------------- #</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Core functions  #</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># --------------- #</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">resolve_article</span>(article_name: str) <span style="color:#f92672">-&gt;</span> Path:
+</span></span><span style="display:flex;"><span>    candidates <span style="color:#f92672">=</span> [
+</span></span><span style="display:flex;"><span>        Path(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;/yout/path/content/posts/</span><span style="color:#e6db74">{</span>article_name<span style="color:#e6db74">}</span><span style="color:#e6db74">/index.md&#34;</span>)
+</span></span><span style="display:flex;"><span>    ]
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> p <span style="color:#f92672">in</span> candidates:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> p<span style="color:#f92672">.</span>exists():
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> p
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">FileNotFoundError</span>(<span style="color:#e6db74">&#34;Article not found&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">insert_at_line</span>(path: Path, insert_text: str, line_no: int) <span style="color:#f92672">-&gt;</span> str:
+</span></span><span style="display:flex;"><span>    lines <span style="color:#f92672">=</span> path<span style="color:#f92672">.</span>read_text(encoding<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;utf-8&#34;</span>)<span style="color:#f92672">.</span>splitlines(keepends<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> line_no <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">or</span> line_no <span style="color:#f92672">&gt;</span> len(lines) <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">ValueError</span>(<span style="color:#e6db74">&#34;line number out of range&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    lines<span style="color:#f92672">.</span>insert(line_no <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, insert_text <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">.</span>join(lines)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">safe_write</span>(path: Path, new_content: str):
+</span></span><span style="display:flex;"><span>    backup <span style="color:#f92672">=</span> path<span style="color:#f92672">.</span>with_suffix(path<span style="color:#f92672">.</span>suffix <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;.bak&#34;</span>)
+</span></span><span style="display:flex;"><span>    tmp <span style="color:#f92672">=</span> path<span style="color:#f92672">.</span>with_suffix(path<span style="color:#f92672">.</span>suffix <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;.tmp&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    shutil<span style="color:#f92672">.</span>copy2(path, backup)
+</span></span><span style="display:flex;"><span>    tmp<span style="color:#f92672">.</span>write_text(new_content, encoding<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;utf-8&#34;</span>)
+</span></span><span style="display:flex;"><span>    tmp<span style="color:#f92672">.</span>replace(path)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">build_insert_text</span>(args) <span style="color:#f92672">-&gt;</span> str:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> args<span style="color:#f92672">.</span>mode <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;picture&#34;</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">{{{{</span><span style="color:#e6db74">&lt; figure src=&#34;</span><span style="color:#e6db74">{</span>args<span style="color:#f92672">.</span>picture_name<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34; title=&#34;&#34; &gt;</span><span style="color:#ae81ff">}}}}</span><span style="color:#e6db74">&#39;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> args<span style="color:#f92672">.</span>mode <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;callout&#34;</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">{{{{</span><span style="color:#e6db74">&lt; callout type=&#34;</span><span style="color:#e6db74">{</span>args<span style="color:#f92672">.</span>callout_type<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34; text=&#34;&#34; &gt;</span><span style="color:#ae81ff">}}}}\n</span><span style="color:#e6db74">&#39;</span> <span style="color:#75715e"># {{&lt; callout type=&#34;alert&#34; text=&#34;&#34; &gt;}}</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> args<span style="color:#f92672">.</span>mode <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;youtube&#34;</span>:
+</span></span><span style="display:flex;"><span>        video_id <span style="color:#f92672">=</span> extract_youtube_id(args<span style="color:#f92672">.</span>url)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">{{{{</span><span style="color:#e6db74">&lt; youtube </span><span style="color:#e6db74">{</span>video_id<span style="color:#e6db74">}</span><span style="color:#e6db74"> &gt;</span><span style="color:#ae81ff">}}}}</span><span style="color:#e6db74">&#39;</span> <span style="color:#75715e"># https://www.youtube.com/watch?v=w7Ft2ymGmfc → w7Ft2ymGmfc</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> args<span style="color:#f92672">.</span>mode <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;tweet&#34;</span>:
+</span></span><span style="display:flex;"><span>        tweet_id <span style="color:#f92672">=</span> extract_tweet_id(args<span style="color:#f92672">.</span>url)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">{{{{</span><span style="color:#e6db74">&lt; tweet </span><span style="color:#e6db74">{</span>tweet_id<span style="color:#e6db74">}</span><span style="color:#e6db74"> &gt;</span><span style="color:#ae81ff">}}}}</span><span style="color:#e6db74">&#39;</span> <span style="color:#75715e"># https://x.com/GoHugoIO/status/877500564405444608 → user=&#34;GoHugoIO&#34; id=&#34;877500564405444608&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">ValueError</span>(<span style="color:#e6db74">&#34;Unknown mode&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">extract_youtube_id</span>(url: str) <span style="color:#f92672">-&gt;</span> str:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    m <span style="color:#f92672">=</span> re<span style="color:#f92672">.</span>search(<span style="color:#e6db74">r</span><span style="color:#e6db74">&#34;v=([^&amp;]+)&#34;</span>, url)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> m:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> m<span style="color:#f92672">.</span>group(<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">ValueError</span>(<span style="color:#e6db74">&#34;Invalid YouTube URL&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">extract_tweet_id</span>(url: str) <span style="color:#f92672">-&gt;</span> str:
+</span></span><span style="display:flex;"><span>    m <span style="color:#f92672">=</span> re<span style="color:#f92672">.</span>search(<span style="color:#e6db74">r</span><span style="color:#e6db74">&#34;https://x\.com/([^/]+)/status/([0-9]+)&#34;</span>, url)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> m:
+</span></span><span style="display:flex;"><span>        user <span style="color:#f92672">=</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;user=&#34;</span><span style="color:#e6db74">{</span>m<span style="color:#f92672">.</span>group(<span style="color:#ae81ff">1</span>)<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;&#39;</span>
+</span></span><span style="display:flex;"><span>        tweet_id <span style="color:#f92672">=</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;id=&#34;</span><span style="color:#e6db74">{</span>m<span style="color:#f92672">.</span>group(<span style="color:#ae81ff">2</span>)<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;&#39;</span>
+</span></span><span style="display:flex;"><span>        tweet <span style="color:#f92672">=</span> <span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{</span>user<span style="color:#e6db74">}</span><span style="color:#e6db74"> </span><span style="color:#e6db74">{</span>tweet_id<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> tweet
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">raise</span> <span style="color:#a6e22e">ValueError</span>(<span style="color:#e6db74">&#34;Invalid tweet URL&#34;</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> __name__ <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;__main__&#34;</span>:
+</span></span><span style="display:flex;"><span>    main()
+</span></span></code></pre></div><p>主に使う機能として</p>
+<ul>
+<li>画像</li>
+<li>Youtube</li>
+<li>X Post(Tweet)</li>
+<li>コールアウト
+の4つに絞っています。</li>
+</ul>
+<h2 id="画像挿入機能">画像挿入機能</h2>
+<p>使い方</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>python3 insert_media.py article_name picture image-1.png -l <span style="color:#ae81ff">10</span>
+</span></span></code></pre></div><p>挿入先の記事(article_name)と画像(image-1.png)と行番号(10)を指定します。<br>
+内部では、単純に<code>{{{{&lt; figure src=&quot;picture_name&quot; title=&quot;&quot; &gt;}}}}'</code>を挿入しているだけです。</p>
+<h2 id="youtube動画埋め込み機能">Youtube動画埋め込み機能</h2>
+<p>使い方</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>python3 insert_media.py article_name youtube https://www.youtube.com/watch?v<span style="color:#f92672">=</span>w7Ft2ymGmfc -l <span style="color:#ae81ff">20</span>
+</span></span></code></pre></div><p>Youtubeでは、<code>vクエリパラメータ</code>の値を参照してHugoに投げるようにしています。<br>
+こんな感じ<code>{{{{&lt; youtube w7Ft2ymGmfc &gt;}}}}</code> スクリプト内部では正規表現を使っています。</p>
+<h2 id="xのpost埋め込み機能">XのPost埋め込み機能</h2>
+<p>使い方</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>python3 insert_media.py article_name tweet https://x.com/GoHugoIO/status/877500564405444608 -l <span style="color:#ae81ff">30</span>
+</span></span></code></pre></div><p>Xでは、Youtubeと少し違います。<br>
+下記のように、ユーザー名とポストIDを取得しなければいけません。<br>
+<code>{{{{&lt; tweet user=&quot;GoHugoIO&quot; id=&quot;877500564405444608&quot; &gt;}}}}</code><br>
+こちらも正規表現を使ってグループ化して<code>user</code>と<code>id</code>に引き渡しています。</p>
+<h2 id="コールアウト機能">コールアウト機能</h2>
+<p>使い方</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>python3 insert_media.py article_name callout warning -l <span style="color:#ae81ff">40</span>
+</span></span></code></pre></div><p>こういったように埋め込まれます<code>{{&lt; callout type=&quot;alert&quot; text=&quot;&quot; &gt;}}</code><br>
+コールアウトは3つの設定とカスタム設定がありますが、今回はデフォルトの3つの設定のみをほどこしました。<br>
+カスタム設定では、絵文字の変更や色、外枠の太さなどが自由に変更できるようです。
+
+<div class='callout callout-alert' style=''>
+  <div class="callout-inner">
+    
+    🚨 <u>Alert</u>
+    <br />
+    こちらはAlertです
+    
+    </div>
+</div>
+</p>
+
+<div class='callout callout-warning' style=''>
+  <div class="callout-inner">
+    
+    ⚠️  <u>Warning</u>
+    <br />
+    こちらはWarningです
+    
+    </div>
+</div>
+
+
+<div class='callout callout-tip' style=''>
+  <div class="callout-inner">
+    
+    🔎 <u>Tip</u>
+    <br />
+    こちらはTipです
+    
+    </div>
+</div>
+
+<h2 id="おまけ">おまけ</h2>
+<p>挿入する画像のexifを削除して、画像名を連番にするシェルスクリプトも用意しました。<br>
+実はこちらが先に完成していました。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">#!/bin/zsh</span>
+</span></span><span style="display:flex;"><span>set -e
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> -z <span style="color:#e6db74">&#34;</span>$1<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;usage: </span>$0<span style="color:#e6db74"> image_name&#34;</span>
+</span></span><span style="display:flex;"><span>    exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>IMG_PATH<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;/your/path/</span>$1<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">[[</span> ! -f <span style="color:#e6db74">&#34;</span>$IMG_PATH<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;Error: File not found - </span>$IMG_PATH<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>exiftool -all<span style="color:#f92672">=</span> $IMG_PATH
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>base<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;image&#34;</span>
+</span></span><span style="display:flex;"><span>ext<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;png&#34;</span>
+</span></span><span style="display:flex;"><span>i<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">while</span> <span style="color:#f92672">[[</span> -e <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>base<span style="color:#e6db74">}</span><span style="color:#e6db74">-</span><span style="color:#e6db74">${</span>i<span style="color:#e6db74">}</span><span style="color:#e6db74">.</span><span style="color:#e6db74">${</span>ext<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]]</span>; <span style="color:#66d9ef">do</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">((</span>i++<span style="color:#f92672">))</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">done</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>new_name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>base<span style="color:#e6db74">}</span><span style="color:#e6db74">-</span><span style="color:#e6db74">${</span>i<span style="color:#e6db74">}</span><span style="color:#e6db74">.</span><span style="color:#e6db74">${</span>ext<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>bak_name<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>base<span style="color:#e6db74">}</span><span style="color:#e6db74">-</span><span style="color:#e6db74">${</span>i<span style="color:#e6db74">}</span><span style="color:#e6db74">.</span><span style="color:#e6db74">${</span>ext<span style="color:#e6db74">}</span><span style="color:#e6db74">.bak&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>exiftool -all<span style="color:#f92672">=</span> -o <span style="color:#e6db74">&#34;</span>$new_name<span style="color:#e6db74">&#34;</span> <span style="color:#e6db74">&#34;</span>$IMG_PATH<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>mv <span style="color:#e6db74">&#34;</span>$IMG_PATH<span style="color:#e6db74">&#34;</span> <span style="color:#e6db74">&#34;</span>$bak_name<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;changed name   : </span>$1<span style="color:#e6db74"> → </span>$new_name<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;created backup : </span>$bak_name<span style="color:#e6db74">&#34;</span>
+</span></span></code></pre></div><p>合わせて使うことによって、ブログの更新を気軽にしよう！という目論みです。</p>
+<h2 id="さいごに">さいごに</h2>
+<p>作ったスクリプトをコードブロックで紹介するときに、ブロック内で<code>shortcode</code>として認識されてしまい、どうやってエスケープすればいいかで20分くらい使ってしまいました。<br>
+C言語のコメントアウトと同じようにすればいいという記事を見つけて解決に至りました。<br>
+めでたしめでたし。</p>
+<p><a href="https://github.com/athul/archie">参考リンク: 使用しているテーマ</a></p>
+<p><a href="https://yuma.cloud/post/2021/01/21/hugo-escape-shortcodes/">参考リンク: コードブロックでショートコードをエスケープする</a></p>
+  
+        </section>
+        <div class="post-tags">
+          
+          
+          <nav class="nav tags">
+            <ul class="tags">
+              
+              <li><a href="/tags/2026">2026</a></li>
+              
+              <li><a href="/tags/2026-01">2026-01</a></li>
+              
+              <li><a href="/tags/script">script</a></li>
+              
+              <li><a href="/tags/shortcode">shortcode</a></li>
+              
+            </ul>
+          </nav>
+          
+          
+        </div>
+      </div>
+
+      
+      
+    </div>
+
+    </article>
+</main>
+<footer>
+  <div style="display:flex"><a class="soc" href="https://github.com/s7fy/" rel="me" title="GitHub"><svg class="feather">
+       <use href="/svg/feather-sprite.51cf5647cb1987f769b616558f2620fd9423d72058490231b391bf6aa3744b55.svg#github" />
+    </svg></a><a class="border"></a><a class="soc" href="https://x.com/s7fyatdesk/" rel="me" title="Twitter"><svg class="feather">
+       <use href="/svg/feather-sprite.51cf5647cb1987f769b616558f2620fd9423d72058490231b391bf6aa3744b55.svg#twitter" />
+    </svg></a><a class="border"></a></div>
+  <div class="footer-info">
+    © 2025 s7fy | <a
+      href="https://github.com/athul/archie">Archie Theme</a> | Built with <a href="https://gohugo.io">Hugo</a>
+  </div>
+</footer>
+
+
+
+</div>
+    </body>
+</html>

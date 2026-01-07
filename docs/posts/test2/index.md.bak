@@ -1,0 +1,34 @@
++++
+date = '2026-01-07T23:22:46+09:00'
+title = 'test2'
+tags = ['2026', '2026-01']
+draft = true
++++
+
+
+
+# this is a tes
+
+
+{{< figure src="test_img.png" >}}
+{{< callout type="alert" text="">}}
+
+
+t
+{{< youtube w7Ft2ymGmfc >}}
+{{< tweet user="GoHugoIO" id="877500564405444608" >}}
+{{< callout type="warning" text="">}}
+
+{{< callout type="tip" text="">}}
+
+
+
+
+
+
+
+
+
+
+
+
