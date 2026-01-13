@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
-	<head lang="en"><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<head lang="en">
 	<meta charset="utf-8" />
 	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>s7fy&#39;s blog | Home </title><link rel="icon" type="image/png" href=img/favicon.ico /><meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="description" content="" />
 	<meta property="og:image" content=""/>
-	<link rel="alternate" type="application/rss+xml" href="http://localhost:1313/index.xml" title="s7fy's blog" />
-	<meta property="og:url" content="http://localhost:1313/">
+	<link rel="alternate" type="application/rss+xml" href="https://s7fy.net/index.xml" title="s7fy's blog" />
+	<meta property="og:url" content="https://s7fy.net/">
   <meta property="og:site_name" content="s7fy&#39;s blog">
   <meta property="og:title" content="s7fy&#39;s blog">
   <meta property="og:locale" content="ja">
@@ -15,19 +15,19 @@
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="s7fy&#39;s blog">
 
-        <link href="http://localhost:1313/css/fonts.2c2227b81b1970a03e760aa2e6121cd01f87c88586803cbb282aa224720a765f.css" rel="stylesheet">
+        <link href="https://s7fy.net/css/fonts.2c2227b81b1970a03e760aa2e6121cd01f87c88586803cbb282aa224720a765f.css" rel="stylesheet">
 	
 
 	
-	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.7a5c05040394322612a2d98397e9932aa81d9d7acc70199463e79f8180c8e0c0.css" />
-		<link id="darkModeStyle" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.478e7f2b9cf8d87be42edfd9fe1810beab1331847df94b1b430478b309f28282.css"   />
+	<link rel="stylesheet" type="text/css" media="screen" href="https://s7fy.net/css/main.7a5c05040394322612a2d98397e9932aa81d9d7acc70199463e79f8180c8e0c0.css" />
+		<link id="darkModeStyle" rel="stylesheet" type="text/css" href="https://s7fy.net/css/dark.478e7f2b9cf8d87be42edfd9fe1810beab1331847df94b1b430478b309f28282.css"   />
 </head>
 
 	<body>
 		<div class="content">
 			<header>
 	<div class="main">
-		<a href="http://localhost:1313/">s7fy&#39;s blog</a>
+		<a href="https://s7fy.net/">s7fy&#39;s blog</a>
 	</div>
 	<nav>
 		
@@ -46,96 +46,6 @@
 				<div class="site-description"><p>Yuruhuwa Develop</p></div>
 				
 				
-				
-				<section class="list-item">
-					<h1 class="title"><a href="/posts/vimrc_mac/">vimrc_mac</a></h1>
-					<time>Jan 6, 2026</time>
-					<br><div class="description">
-	
-	<h1 id="macでyy--pが使えない">Macで<code>yy + p</code>が使えない！！</h1>
-<p>Macでvimで作業するときの基礎コマンドである<code>ヤンク</code>と<code>ペースト</code>ですが、
-Macでは<code>.vimrc</code>に設定をしないと<code>ペースト</code>ができないようです。
-以下のように設定をしたら解決しました。</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-.vimrc" data-lang=".vimrc"><span style="display:flex;"><span><span style="color:#66d9ef">set</span> <span style="color:#a6e22e">clipboard</span>=<span style="color:#a6e22e">unnamed</span>,<span style="color:#a6e22e">unnamedplus</span>
-</span></span></code></pre></div>
-<div class='callout callout-warning' style=''>
-  <div class="callout-inner">
-    
-    ⚠️  <u>Warning</u>
-    <br />
-    以下の設定では、システムクリップボードレジスタが使えないので機能しなかったです。
-    
-    </div>
-</div>
-
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-.vimrc" data-lang=".vimrc"><span style="display:flex;"><span><span style="color:#66d9ef">set</span> <span style="color:#a6e22e">clipboard</span>=<span style="color:#a6e22e">unnamedplus</span>
-</span></span></code></pre></div><p>念の為、<code>unnamed</code>と<code>unnamedplus</code>を指定しました。
-どうやら、<code>unnamedplus</code>というのはunix系のレジスタで扱うシステムクリップボードのレジスタのようです。<br>
-なので、Macは<code>unnamed</code>を指定するとうまくいくみたいです。<br>
-vimでの<code>ヤンク</code>とOSでの<code>クリップボード</code>では格納されるレジスタや参照されるレジスタが違うので、うまく機能しなかったのかなと思います。<br>
-<a href="https://github.com/Neos21/dotfiles/blob/master/.vimrc">参考にした記事:  .vimrcの設定</a></p>
-<p><a href="https://qiita.com/0829/items/0b3f63798b6910623efc#9--%E6%9C%80%E7%B5%82%E6%A4%9C%E7%B4%A2%E3%83%91%E3%82%BF%E3%83%BC%E3%83%B3%E7%94%A8%E3%83%AC%E3%82%B8%E3%82%B9%E3%82%BF-">参考にした記事: レジスタ一覧</a></p>
-<p><a href="https://vimdoc.sourceforge.net/htmldoc/change.html#registers">参考にした記事: レジスタ一覧(英語ソース)</a></p>&hellip;
-	
-</div>
-					<a class="readmore" href="/posts/vimrc_mac/">Read more ⟶</a>
-				</section>
-				
-				<section class="list-item">
-					<h1 class="title"><a href="/posts/article_script/">article_script</a></h1>
-					<time>Jan 5, 2026</time>
-					<br><div class="description">
-	
-	<h1 id="記事のテンプレートを自動生成させる">記事のテンプレートを自動生成させる</h1>
-<p>hugoでは、<a href="https://gohugo.io/content-management/front-matter/">Front Matter</a>と呼ばれる機能をサポートしています。<br>
-ただ、これを書くのがめんどくさいんですよね。<br>
-そこで、記事を書く際に情報を自動的に記入するシェルスクリプトを書きました。</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span><span style="color:#75715e">#!/bin/zsh
-</span></span></span><span style="display:flex;"><span>set -e
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>cd ~/blog
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> -z <span style="color:#e6db74">&#34;</span>$1<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
-</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;usage: </span>$0<span style="color:#e6db74"> article_name&#34;</span>
-</span></span><span style="display:flex;"><span>  exit <span style="color:#ae81ff">1</span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fi</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>POST<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;/your/path/content/posts/</span>$1<span style="color:#e6db74">.md&#34;</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>DATE<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>date <span style="color:#e6db74">&#34;+%Y-%m-%dT%H:%M:%S+09:00&#34;</span><span style="color:#66d9ef">)</span>
-</span></span><span style="display:flex;"><span>TAG_Y<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>date <span style="color:#e6db74">&#34;+%Y&#34;</span><span style="color:#66d9ef">)</span>
-</span></span><span style="display:flex;"><span>TAG_YM<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>date <span style="color:#e6db74">&#34;+%Y-%m&#34;</span><span style="color:#66d9ef">)</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> -e <span style="color:#e6db74">&#34;</span>$POST<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
-</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;already exists: </span>$POST<span style="color:#e6db74">&#34;</span>
-</span></span><span style="display:flex;"><span>  exit <span style="color:#ae81ff">1</span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fi</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>cat <span style="color:#e6db74">&lt;&lt;EOF &gt; &#34;$POST&#34;
-</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">+++
-</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">date = &#39;$DATE&#39;
-</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">title = &#39;$1&#39;
-</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">tags = [&#39;$TAG_Y&#39;, &#39;$TAG_YM&#39;]
-</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">draft = true
-</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">+++
-</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
-</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">EOF</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;made it : </span>$POST<span style="color:#e6db74">&#34;</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>vim $POST
-</span></span></code></pre></div><p>シェルスクリプトの動きを簡単に紹介します。</p>
-<ul>
-<li>記事名を入力する</li>
-<li>決められたディレクトリに記事名.mdを作成する。</li>
-<li>dateコマンドで現在時刻を整形して取得 → Front Matterに埋め込む</li>
-<li>vimコマンドを実行し、即座に記事が書き始められます。</li>
-</ul>
-<p>このようにテンプレートが挿入されて、悩まずに書き始められるようになりました。</p>&hellip;
-	
-</div>
-					<a class="readmore" href="/posts/article_script/">Read more ⟶</a>
-				</section>
 				
 				<section class="list-item">
 					<h1 class="title"><a href="/posts/helloworld/">Helloworld</a></h1>
@@ -177,6 +87,8 @@ github pagesを使って静的ホストしています。</p>&hellip;
       href="https://github.com/athul/archie">Archie Theme</a> | Built with <a href="https://gohugo.io">Hugo</a>
   </div>
 </footer>
+
+
 
 
 		</div>
