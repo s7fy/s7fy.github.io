@@ -48,6 +48,62 @@
 				
 				
 				<section class="list-item">
+					<h1 class="title"><a href="/posts/article_script/">article_script</a></h1>
+					<time>Jan 5, 2026</time>
+					<br><div class="description">
+	
+	<h1 id="記事のテンプレートを自動生成させる">記事のテンプレートを自動生成させる</h1>
+<p>hugoでは、<a href="https://gohugo.io/content-management/front-matter/">Front Matter</a>と呼ばれる機能をサポートしています。<br>
+ただ、これを書くのがめんどくさいんですよね。<br>
+そこで、記事を書く際に情報を自動的に記入するシェルスクリプトを書きました。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sh" data-lang="sh"><span style="display:flex;"><span><span style="color:#75715e">#!/bin/zsh
+</span></span></span><span style="display:flex;"><span>set -e
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>cd ~/blog
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> -z <span style="color:#e6db74">&#34;</span>$1<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;usage: </span>$0<span style="color:#e6db74"> article_name&#34;</span>
+</span></span><span style="display:flex;"><span>  exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>POST<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;/your/path/content/posts/</span>$1<span style="color:#e6db74">.md&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>DATE<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>date <span style="color:#e6db74">&#34;+%Y-%m-%dT%H:%M:%S+09:00&#34;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>TAG_Y<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>date <span style="color:#e6db74">&#34;+%Y&#34;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>TAG_YM<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>date <span style="color:#e6db74">&#34;+%Y-%m&#34;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#f92672">[</span> -e <span style="color:#e6db74">&#34;</span>$POST<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>  echo <span style="color:#e6db74">&#34;already exists: </span>$POST<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>  exit <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>cat <span style="color:#e6db74">&lt;&lt;EOF &gt; &#34;$POST&#34;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">+++
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">date = &#39;$DATE&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">title = &#39;$1&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">tags = [&#39;$TAG_Y&#39;, &#39;$TAG_YM&#39;]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">draft = true
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">+++
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">EOF</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>echo <span style="color:#e6db74">&#34;made it : </span>$POST<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>vim $POST
+</span></span></code></pre></div><p>シェルスクリプトの動きを簡単に紹介します。</p>
+<ul>
+<li>記事名を入力する</li>
+<li>決められたディレクトリに記事名.mdを作成する。</li>
+<li>dateコマンドで現在時刻を整形して取得 → Front Matterに埋め込む</li>
+<li>vimコマンドを実行し、即座に記事が書き始められます。</li>
+</ul>
+<p>このようにテンプレートが挿入されて、悩まずに書き始められるようになりました。</p>&hellip;
+	
+</div>
+					<a class="readmore" href="/posts/article_script/">Read more ⟶</a>
+				</section>
+				
+				<section class="list-item">
 					<h1 class="title"><a href="/posts/helloworld/">Helloworld</a></h1>
 					<time>Dec 31, 2025</time>
 					<br><div class="description">

@@ -2,7 +2,7 @@
 date = '2026-01-13T11:38:03+09:00'
 title = 'keyboard_silencing_mod'
 tags = ['2026', '2026-01', 'keyboard', 'mygear', 'mod']
-draft = true
+draft = false
 +++
 
 # キーボード静音化への道
