@@ -2,54 +2,69 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://s7fy.net/tags/2026/</loc>
+    <loc>http://localhost:1313/tags/2026/</loc>
+    <lastmod>2026-01-13T11:38:03+09:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/2026-01/</loc>
+    <lastmod>2026-01-13T11:38:03+09:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/keyboard/</loc>
+    <lastmod>2026-01-13T11:38:03+09:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/posts/keyboard_silencing_mod/</loc>
+    <lastmod>2026-01-13T11:38:03+09:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/mod/</loc>
+    <lastmod>2026-01-13T11:38:03+09:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/mygear/</loc>
+    <lastmod>2026-01-13T11:38:03+09:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/posts/</loc>
+    <lastmod>2026-01-13T11:38:03+09:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/</loc>
+    <lastmod>2026-01-13T11:38:03+09:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/</loc>
+    <lastmod>2026-01-13T11:38:03+09:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/posts/article_script2/</loc>
     <lastmod>2026-01-07T23:51:33+09:00</lastmod>
   </url><url>
-    <loc>https://s7fy.net/tags/2026-01/</loc>
+    <loc>http://localhost:1313/tags/script/</loc>
     <lastmod>2026-01-07T23:51:33+09:00</lastmod>
   </url><url>
-    <loc>https://s7fy.net/posts/article_script2/</loc>
+    <loc>http://localhost:1313/tags/shortcode/</loc>
     <lastmod>2026-01-07T23:51:33+09:00</lastmod>
   </url><url>
-    <loc>https://s7fy.net/posts/</loc>
-    <lastmod>2026-01-07T23:51:33+09:00</lastmod>
+    <loc>http://localhost:1313/posts/test/</loc>
+    <lastmod>2026-01-07T21:55:45+09:00</lastmod>
   </url><url>
-    <loc>https://s7fy.net/</loc>
-    <lastmod>2026-01-07T23:51:33+09:00</lastmod>
-  </url><url>
-    <loc>https://s7fy.net/tags/script/</loc>
-    <lastmod>2026-01-07T23:51:33+09:00</lastmod>
-  </url><url>
-    <loc>https://s7fy.net/tags/shortcode/</loc>
-    <lastmod>2026-01-07T23:51:33+09:00</lastmod>
-  </url><url>
-    <loc>https://s7fy.net/tags/</loc>
-    <lastmod>2026-01-07T23:51:33+09:00</lastmod>
-  </url><url>
-    <loc>https://s7fy.net/tags/mac/</loc>
+    <loc>http://localhost:1313/tags/mac/</loc>
     <lastmod>2026-01-06T10:46:40+09:00</lastmod>
   </url><url>
-    <loc>https://s7fy.net/tags/register/</loc>
+    <loc>http://localhost:1313/tags/register/</loc>
     <lastmod>2026-01-06T10:46:40+09:00</lastmod>
   </url><url>
-    <loc>https://s7fy.net/tags/vim/</loc>
+    <loc>http://localhost:1313/tags/vim/</loc>
     <lastmod>2026-01-06T10:46:40+09:00</lastmod>
   </url><url>
-    <loc>https://s7fy.net/posts/vimrc_mac/</loc>
+    <loc>http://localhost:1313/posts/vimrc_mac/</loc>
     <lastmod>2026-01-06T10:46:40+09:00</lastmod>
   </url><url>
-    <loc>https://s7fy.net/posts/article_script/</loc>
+    <loc>http://localhost:1313/posts/article_script/</loc>
     <lastmod>2026-01-05T20:44:14+09:00</lastmod>
   </url><url>
-    <loc>https://s7fy.net/tags/2025/</loc>
+    <loc>http://localhost:1313/tags/2025/</loc>
     <lastmod>2025-12-31T05:26:05+09:00</lastmod>
   </url><url>
-    <loc>https://s7fy.net/tags/2025-12/</loc>
+    <loc>http://localhost:1313/tags/2025-12/</loc>
     <lastmod>2025-12-31T05:26:05+09:00</lastmod>
   </url><url>
-    <loc>https://s7fy.net/posts/helloworld/</loc>
+    <loc>http://localhost:1313/posts/helloworld/</loc>
     <lastmod>2025-12-31T05:26:05+09:00</lastmod>
   </url><url>
-    <loc>https://s7fy.net/categories/</loc>
+    <loc>http://localhost:1313/categories/</loc>
   </url>
 </urlset>

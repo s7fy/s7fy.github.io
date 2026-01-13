@@ -1,12 +1,12 @@
 #!/bin/zsh
 set -e
 
-if [ -z "$1" ]; then
-    echo "usage: $0 image_name"
+if [[ -z "$1" || -z "$2" ]]; then
+    echo "usage: $0 image_name image_path"
     exit 1
 fi
 
-IMG_PATH="/Users/s7fy/blog/blogScript/$1"
+IMG_PATH="$2/$1"
 
 if [[ ! -f "$IMG_PATH" ]]; then
     echo "Error: File not found - $IMG_PATH"
@@ -15,7 +15,7 @@ fi
 exiftool -all= $IMG_PATH
 
 base="image"
-ext="png"
+ext=["png", "jpg", "gif"]
 i=1
 
 while [[ -e "${base}-${i}.${ext}" ]]; do

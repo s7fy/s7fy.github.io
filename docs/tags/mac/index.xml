@@ -2,17 +2,17 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Mac on s7fy&#39;s blog</title>
-    <link>https://s7fy.net/tags/mac/</link>
+    <link>http://localhost:1313/tags/mac/</link>
     <description>Recent content in Mac on s7fy&#39;s blog</description>
     <generator>Hugo</generator>
     <language>ja</language>
     <lastBuildDate>Tue, 06 Jan 2026 10:46:40 +0900</lastBuildDate>
-    <atom:link href="https://s7fy.net/tags/mac/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/tags/mac/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>vimrc_mac</title>
-      <link>https://s7fy.net/posts/vimrc_mac/</link>
+      <link>http://localhost:1313/posts/vimrc_mac/</link>
       <pubDate>Tue, 06 Jan 2026 10:46:40 +0900</pubDate>
-      <guid>https://s7fy.net/posts/vimrc_mac/</guid>
+      <guid>http://localhost:1313/posts/vimrc_mac/</guid>
       <description>&lt;h1 id=&#34;macでyy--pが使えない&#34;&gt;Macで&lt;code&gt;yy + p&lt;/code&gt;が使えない！！&lt;/h1&gt;&#xA;&lt;p&gt;Macでvimで作業するときの基礎コマンドである&lt;code&gt;ヤンク&lt;/code&gt;と&lt;code&gt;ペースト&lt;/code&gt;ですが、&#xA;Macでは&lt;code&gt;.vimrc&lt;/code&gt;に設定をしないと&lt;code&gt;ペースト&lt;/code&gt;ができないようです。&#xA;以下のように設定をしたら解決しました。&lt;/p&gt;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-.vimrc&#34; data-lang=&#34;.vimrc&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;set&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;clipboard&lt;/span&gt;=&lt;span style=&#34;color:#a6e22e&#34;&gt;unnamed&lt;/span&gt;,&lt;span style=&#34;color:#a6e22e&#34;&gt;unnamedplus&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&#xA;&lt;div class=&#39;callout callout-warning&#39; style=&#39;&#39;&gt;&#xA;  &lt;div class=&#34;callout-inner&#34;&gt;&#xA;    &#xA;    ⚠️  &lt;u&gt;Warning&lt;/u&gt;&#xA;    &lt;br /&gt;&#xA;    以下の設定では、システムクリップボードレジスタが使えないので機能しなかったです。&#xA;    &#xA;    &lt;/div&gt;&#xA;&lt;/div&gt;&#xA;&#xA;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-.vimrc&#34; data-lang=&#34;.vimrc&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;set&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;clipboard&lt;/span&gt;=&lt;span style=&#34;color:#a6e22e&#34;&gt;unnamedplus&lt;/span&gt;&#xA;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;念の為、&lt;code&gt;unnamed&lt;/code&gt;と&lt;code&gt;unnamedplus&lt;/code&gt;を指定しました。&#xA;どうやら、&lt;code&gt;unnamedplus&lt;/code&gt;というのはunix系のレジスタで扱うシステムクリップボードのレジスタのようです。&lt;br&gt;&#xA;なので、Macは&lt;code&gt;unnamed&lt;/code&gt;を指定するとうまくいくみたいです。&lt;br&gt;&#xA;vimでの&lt;code&gt;ヤンク&lt;/code&gt;とOSでの&lt;code&gt;クリップボード&lt;/code&gt;では格納されるレジスタや参照されるレジスタが違うので、うまく機能しなかったのかなと思います。&lt;br&gt;&#xA;&lt;a href=&#34;https://github.com/Neos21/dotfiles/blob/master/.vimrc&#34;&gt;参考にした記事:  .vimrcの設定&lt;/a&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://qiita.com/0829/items/0b3f63798b6910623efc#9--%E6%9C%80%E7%B5%82%E6%A4%9C%E7%B4%A2%E3%83%91%E3%82%BF%E3%83%BC%E3%83%B3%E7%94%A8%E3%83%AC%E3%82%B8%E3%82%B9%E3%82%BF-&#34;&gt;参考にした記事: レジスタ一覧&lt;/a&gt;&lt;/p&gt;&#xA;&lt;p&gt;&lt;a href=&#34;https://vimdoc.sourceforge.net/htmldoc/change.html#registers&#34;&gt;参考にした記事: レジスタ一覧(英語ソース)&lt;/a&gt;&lt;/p&gt;</description>
     </item>
   </channel>
