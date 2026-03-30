@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html><head lang="en"><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>how_to_found_vuln - s7fy&#39;s blog</title><link rel="icon" type="image/png" href=img/favicon.ico /><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="はじめに
+卒業を控えた2月末、WordPressのプラグインから脆弱性を発見し、報告することができました。 
+今回は、脆弱性調査から実際に報告した流れを記します。
+CVEが発行された場合はまた別の記事にでも書こうと思います。
+
+きっかけ
+調査対象の選定
+報告する機関
+簡潔に伝える
+
+きっかけ
+Webセキュリティの脆弱性について触れることが多くなり、この学びをどこかに発散したかった。
+そして、脆弱性の第一発見者になってみたかったから。 
+また、他校の卒業展にて未知の脆弱性の発見, 報告が題材の出展があり、お話を聞いたことが引き金でもあります。
+特にRCEなどマシンを掌握する脆弱性についてはハッカー感が満載でロマンがあります。
+密かに在学中にCVE採番を目指していました。
+調査対象の選定
+まずは調査したい対象のシステムを探します。
+セキュリティに強いひとたちの話や、バグハンター記事を探すと、大きいコアシステムではなく、小さいサブシステムが穴場である。という情報を得ました。
+それらを踏まえて、プラグインなどの小さい規模のプログラムに目を向けることにしました。
+ただ、やみくもに調査することは時間が足りませんし、疲れてしまいます。
+ユーザ入力を受け取る箇所と実際に発火する関数の箇所を見るほうが断然に楽です。
+製品名は伏せますが、とあるWordPressのプラグインに着目しました。
+例えば、以下のようなコードがあればかなり怪しいです。
+&lt;?php
+if isset($_POST[&#39;user_input&#39;]) {
+    $user_input = $_POST[&#39;user_input&#39;];
+}
+else {
+    $user_input = &#39;&#39;;
+}
+?&gt;
+ユーザ入力をそのまま受け取って $user_input に格納しています。
+ユーザ入力から何が渡されるかはわからないので、有害な文字列を受け取ってもおかしくないです。
+例えば、;cat&#43;%2Fetc%2Fpasswd# という文字列を受け取ってしまう場合を考えると、コード内部で shell_exec() や exec() や system() や passthru() などに $user_input を引き渡していると、PHPでOSコマンドインジェクションが成立してしまいます。
+&lt;?php
+$user_input = &#39;;cat /etc/passwd#&#39;
+$origin_name = &#39;test&#39;
+exec(mv $origin $user_input) // ファイル名を任意の名前に変更できる想定
+?&gt;
+値を入れて組み立てると、以下のようになります。
+&lt;?php
+exec(mv test ;cat /etc/passwd#)
+?&gt;
+こうなると、 mvコマンドのフォーマットが崩れ、実行されなくなります。
+その後、セミコロンから後のコマンドが解釈されて、 catコマンドが実行されます。
+また、シャープはPHPにおける一行コメントアウトです。
+exec関数がまだ後ろに続く場合、コメントアウトすることによって、エラーや別の処理を止めます。
+このように、コードを眺め、$_POST や $_GET などのメソッドをどういった使い方をしているかを中心に調べて行きました。
+また、WordPressはCSRFの対策を明示的にしないといけない(WordPress側にはセキュアな処理がない)ので、OSコマンドインジェクションとCSRFを探しました。" />
+	<meta property="og:image" content=""/>
+	<meta property="og:url" content="http://localhost:1313/posts/how_to_found_vuln/">
+  <meta property="og:site_name" content="s7fy&#39;s blog">
+  <meta property="og:title" content="how_to_found_vuln">
+  <meta property="og:description" content="はじめに 卒業を控えた2月末、WordPressのプラグインから脆弱性を発見し、報告することができました。 今回は、脆弱性調査から実際に報告した流れを記します。
+CVEが発行された場合はまた別の記事にでも書こうと思います。
+きっかけ 調査対象の選定 報告する機関 簡潔に伝える きっかけ Webセキュリティの脆弱性について触れることが多くなり、この学びをどこかに発散したかった。
+そして、脆弱性の第一発見者になってみたかったから。 また、他校の卒業展にて未知の脆弱性の発見, 報告が題材の出展があり、お話を聞いたことが引き金でもあります。
+特にRCEなどマシンを掌握する脆弱性についてはハッカー感が満載でロマンがあります。
+密かに在学中にCVE採番を目指していました。
+調査対象の選定 まずは調査したい対象のシステムを探します。
+セキュリティに強いひとたちの話や、バグハンター記事を探すと、大きいコアシステムではなく、小さいサブシステムが穴場である。という情報を得ました。
+それらを踏まえて、プラグインなどの小さい規模のプログラムに目を向けることにしました。
+ただ、やみくもに調査することは時間が足りませんし、疲れてしまいます。
+ユーザ入力を受け取る箇所と実際に発火する関数の箇所を見るほうが断然に楽です。
+製品名は伏せますが、とあるWordPressのプラグインに着目しました。
+例えば、以下のようなコードがあればかなり怪しいです。
+&lt;?php if isset($_POST[&#39;user_input&#39;]) { $user_input = $_POST[&#39;user_input&#39;]; } else { $user_input = &#39;&#39;; } ?&gt; ユーザ入力をそのまま受け取って $user_input に格納しています。
+ユーザ入力から何が渡されるかはわからないので、有害な文字列を受け取ってもおかしくないです。
+例えば、;cat&#43;%2Fetc%2Fpasswd# という文字列を受け取ってしまう場合を考えると、コード内部で shell_exec() や exec() や system() や passthru() などに $user_input を引き渡していると、PHPでOSコマンドインジェクションが成立してしまいます。
+&lt;?php $user_input = &#39;;cat /etc/passwd#&#39; $origin_name = &#39;test&#39; exec(mv $origin $user_input) // ファイル名を任意の名前に変更できる想定 ?&gt; 値を入れて組み立てると、以下のようになります。
+&lt;?php exec(mv test ;cat /etc/passwd#) ?&gt; こうなると、 mvコマンドのフォーマットが崩れ、実行されなくなります。
+その後、セミコロンから後のコマンドが解釈されて、 catコマンドが実行されます。
+また、シャープはPHPにおける一行コメントアウトです。
+exec関数がまだ後ろに続く場合、コメントアウトすることによって、エラーや別の処理を止めます。
+このように、コードを眺め、$_POST や $_GET などのメソッドをどういった使い方をしているかを中心に調べて行きました。
+また、WordPressはCSRFの対策を明示的にしないといけない(WordPress側にはセキュアな処理がない)ので、OSコマンドインジェクションとCSRFを探しました。">
+  <meta property="og:locale" content="ja">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2026-03-02T13:24:05+09:00">
+    <meta property="article:modified_time" content="2026-03-02T13:24:05+09:00">
+    <meta property="article:tag" content="2026">
+    <meta property="article:tag" content="2026-03">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="how_to_found_vuln">
+  <meta name="twitter:description" content="はじめに 卒業を控えた2月末、WordPressのプラグインから脆弱性を発見し、報告することができました。 今回は、脆弱性調査から実際に報告した流れを記します。
+CVEが発行された場合はまた別の記事にでも書こうと思います。
+きっかけ 調査対象の選定 報告する機関 簡潔に伝える きっかけ Webセキュリティの脆弱性について触れることが多くなり、この学びをどこかに発散したかった。
+そして、脆弱性の第一発見者になってみたかったから。 また、他校の卒業展にて未知の脆弱性の発見, 報告が題材の出展があり、お話を聞いたことが引き金でもあります。
+特にRCEなどマシンを掌握する脆弱性についてはハッカー感が満載でロマンがあります。
+密かに在学中にCVE採番を目指していました。
+調査対象の選定 まずは調査したい対象のシステムを探します。
+セキュリティに強いひとたちの話や、バグハンター記事を探すと、大きいコアシステムではなく、小さいサブシステムが穴場である。という情報を得ました。
+それらを踏まえて、プラグインなどの小さい規模のプログラムに目を向けることにしました。
+ただ、やみくもに調査することは時間が足りませんし、疲れてしまいます。
+ユーザ入力を受け取る箇所と実際に発火する関数の箇所を見るほうが断然に楽です。
+製品名は伏せますが、とあるWordPressのプラグインに着目しました。
+例えば、以下のようなコードがあればかなり怪しいです。
+&lt;?php if isset($_POST[&#39;user_input&#39;]) { $user_input = $_POST[&#39;user_input&#39;]; } else { $user_input = &#39;&#39;; } ?&gt; ユーザ入力をそのまま受け取って $user_input に格納しています。
+ユーザ入力から何が渡されるかはわからないので、有害な文字列を受け取ってもおかしくないです。
+例えば、;cat&#43;%2Fetc%2Fpasswd# という文字列を受け取ってしまう場合を考えると、コード内部で shell_exec() や exec() や system() や passthru() などに $user_input を引き渡していると、PHPでOSコマンドインジェクションが成立してしまいます。
+&lt;?php $user_input = &#39;;cat /etc/passwd#&#39; $origin_name = &#39;test&#39; exec(mv $origin $user_input) // ファイル名を任意の名前に変更できる想定 ?&gt; 値を入れて組み立てると、以下のようになります。
+&lt;?php exec(mv test ;cat /etc/passwd#) ?&gt; こうなると、 mvコマンドのフォーマットが崩れ、実行されなくなります。
+その後、セミコロンから後のコマンドが解釈されて、 catコマンドが実行されます。
+また、シャープはPHPにおける一行コメントアウトです。
+exec関数がまだ後ろに続く場合、コメントアウトすることによって、エラーや別の処理を止めます。
+このように、コードを眺め、$_POST や $_GET などのメソッドをどういった使い方をしているかを中心に調べて行きました。
+また、WordPressはCSRFの対策を明示的にしないといけない(WordPress側にはセキュアな処理がない)ので、OSコマンドインジェクションとCSRFを探しました。">
+
+        <link href="http://localhost:1313/css/fonts.2c2227b81b1970a03e760aa2e6121cd01f87c88586803cbb282aa224720a765f.css" rel="stylesheet">
+	
+
+	
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.7a5c05040394322612a2d98397e9932aa81d9d7acc70199463e79f8180c8e0c0.css" />
+		<link id="darkModeStyle" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.478e7f2b9cf8d87be42edfd9fe1810beab1331847df94b1b430478b309f28282.css"   />
+</head>
+<body>
+        <div class="content"><header>
+	<div class="main">
+		<a href="http://localhost:1313/">s7fy&#39;s blog</a>
+	</div>
+	<nav>
+		
+		<a href="/">Home</a>
+		
+		<a href="/posts">All posts</a>
+		
+		<a href="/tags">Tags</a>
+		
+		
+	</nav>
+</header>
+
+<main>
+  <article>
+    <div class="post-container">
+      
+      <div class="post-content">
+        <div class="title">
+          <h1 class="title">how_to_found_vuln</h1>
+          <div class="meta">Posted on Mar 2, 2026 <span class="draft-label">DRAFT</span> </div>
+          
+        </div>
+        
+        <section class="body">
+          <h1 id="はじめに">はじめに</h1>
+<p>卒業を控えた2月末、WordPressのプラグインから脆弱性を発見し、報告することができました。 <br>
+今回は、脆弱性調査から実際に報告した流れを記します。<br>
+CVEが発行された場合はまた別の記事にでも書こうと思います。</p>
+<ul>
+<li><a href="#%E3%81%8D%E3%81%A3%E3%81%8B%E3%81%91">きっかけ</a></li>
+<li><a href="#%E8%AA%BF%E6%9F%BB%E5%AF%BE%E8%B1%A1%E3%81%AE%E9%81%B8%E5%AE%9A">調査対象の選定</a></li>
+<li><a href="#%E5%A0%B1%E5%91%8A%E3%81%99%E3%82%8B%E6%A9%9F%E9%96%A2">報告する機関</a></li>
+<li><a href="#%E7%B0%A1%E6%BD%94%E3%81%AB%E4%BC%9D%E3%81%88%E3%82%8B">簡潔に伝える</a></li>
+</ul>
+<h1 id="きっかけ">きっかけ</h1>
+<p>Webセキュリティの脆弱性について触れることが多くなり、この学びをどこかに発散したかった。<br>
+そして、脆弱性の第一発見者になってみたかったから。 <br>
+また、他校の卒業展にて未知の脆弱性の発見, 報告が題材の出展があり、お話を聞いたことが引き金でもあります。<br>
+特にRCEなどマシンを掌握する脆弱性についてはハッカー感が満載でロマンがあります。<br>
+密かに在学中にCVE採番を目指していました。</p>
+<h1 id="調査対象の選定">調査対象の選定</h1>
+<p>まずは調査したい対象のシステムを探します。<br>
+セキュリティに強いひとたちの話や、バグハンター記事を探すと、大きいコアシステムではなく、小さいサブシステムが穴場である。という情報を得ました。<br>
+それらを踏まえて、プラグインなどの小さい規模のプログラムに目を向けることにしました。<br>
+ただ、やみくもに調査することは時間が足りませんし、疲れてしまいます。<br>
+ユーザ入力を受け取る箇所と実際に発火する関数の箇所を見るほうが断然に楽です。</p>
+<p>製品名は伏せますが、とあるWordPressのプラグインに着目しました。<br>
+例えば、以下のようなコードがあればかなり怪しいです。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-php" data-lang="php"><span style="display:flex;"><span><span style="color:#f92672">&lt;?</span><span style="color:#a6e22e">php</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">isset</span>($_POST[<span style="color:#e6db74">&#39;user_input&#39;</span>]) {
+</span></span><span style="display:flex;"><span>    $user_input <span style="color:#f92672">=</span> $_POST[<span style="color:#e6db74">&#39;user_input&#39;</span>];
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>    $user_input <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;&#39;</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e">?&gt;</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>ユーザ入力をそのまま受け取って <code>$user_input</code> に格納しています。<br>
+ユーザ入力から何が渡されるかはわからないので、有害な文字列を受け取ってもおかしくないです。<br>
+例えば、<code>;cat+%2Fetc%2Fpasswd#</code> という文字列を受け取ってしまう場合を考えると、コード内部で <code>shell_exec()</code> や <code>exec()</code> や <code>system()</code> や <code>passthru()</code> などに <code>$user_input</code> を引き渡していると、PHPでOSコマンドインジェクションが成立してしまいます。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-php" data-lang="php"><span style="display:flex;"><span><span style="color:#f92672">&lt;?</span><span style="color:#a6e22e">php</span>
+</span></span><span style="display:flex;"><span>$user_input <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;;cat /etc/passwd#&#39;</span>
+</span></span><span style="display:flex;"><span>$origin_name <span style="color:#f92672">=</span> <span style="color:#e6db74">&#39;test&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">exec</span>(<span style="color:#a6e22e">mv</span> $origin $user_input) <span style="color:#75715e">// ファイル名を任意の名前に変更できる想定
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">?&gt;</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>値を入れて組み立てると、以下のようになります。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-php" data-lang="php"><span style="display:flex;"><span><span style="color:#f92672">&lt;?</span><span style="color:#a6e22e">php</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">exec</span>(<span style="color:#a6e22e">mv</span> <span style="color:#a6e22e">test</span> ;<span style="color:#a6e22e">cat</span> <span style="color:#f92672">/</span><span style="color:#a6e22e">etc</span><span style="color:#f92672">/</span><span style="color:#a6e22e">passwd</span><span style="color:#75715e">#)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">?&gt;</span><span style="color:#960050;background-color:#1e0010">
+</span></span></span></code></pre></div><p>こうなると、 <code>mv</code>コマンドのフォーマットが崩れ、実行されなくなります。<br>
+その後、セミコロンから後のコマンドが解釈されて、 <code>cat</code>コマンドが実行されます。<br>
+また、シャープはPHPにおける一行コメントアウトです。<br>
+<code>exec</code>関数がまだ後ろに続く場合、コメントアウトすることによって、エラーや別の処理を止めます。<br>
+このように、コードを眺め、<code>$_POST</code> や <code>$_GET</code> などのメソッドをどういった使い方をしているかを中心に調べて行きました。<br>
+また、WordPressはCSRFの対策を明示的にしないといけない(WordPress側にはセキュアな処理がない)ので、OSコマンドインジェクションとCSRFを探しました。</p>
+<h1 id="報告する機関">報告する機関</h1>
+<p>次に見つけた脆弱性を報告する窓口についてです。
+今回見つけたプラグインはソースコードに <code>SECURITY.md</code> というマークダウンファイルが添付してあり、そこで指定されていました。<br>
+<code>PatchStack</code> と呼ばれる脆弱性報告プログラムに登録されており、プラグイン開発者でなく、セキュリティーベンダーに報告する形でした。</p>
+<h1 id="簡潔に伝える">簡潔に伝える</h1>
+<p>脆弱性報告レポートの書き方についてです。<br>
+技術者向けに英語で書かなければ伝わりません。<br>
+また、直接開発したひとが読むわけではないので、再現手順は丁寧にしました。<br>
+実際の報告レポートやLLMの回答を参考に、フォーマットを洗い出しました。</p>
+<h3 id="完成したフォーマット">完成したフォーマット</h3>
+<ul>
+<li>Title(タイトル)</li>
+<li>Table of Contents(目次)</li>
+<li>Overview(概要)</li>
+<li>Vulunerabiliry Summary(脆弱性の概要)</li>
+<li>Affecred Product Infomation(該当するプログラム)</li>
+<li>Test Ebviroment(テストした環境)</li>
+<li>Technical Details(技術的な詳細)
+<ul>
+<li>Source(ユーザー入力を受け付ける箇所)</li>
+<li>Sink(ユーザー入力が実行される箇所)</li>
+</ul>
+</li>
+<li>Proof of Concept(PoC)
+<ul>
+<li>Step 1 xxx</li>
+<li>Step 2 yyy</li>
+<li>Step 3 zzz</li>
+</ul>
+</li>
+<li>Recommended Remediation(推奨する修正案)</li>
+<li>CVE Request(CVE採番要求)</li>
+<li>Contact Infomation(連絡先)</li>
+</ul>
+<p>あとは忠実に項目を埋めていきます。
+一番時間がかかったのは、PoCでした。
+発見した脆弱性にはテクニックが必要だったので、それを一から説明すること、スクリーンショットを貼ってわかりやすく工夫して対処しました。<br>
+他人が書いたコードは読みにくいので、コメントアウトや意図をいれるように心がけました。</p>
+  
+        </section>
+        <div class="post-tags">
+          
+          
+          <nav class="nav tags">
+            <ul class="tags">
+              
+              <li><a href="/tags/2026">2026</a></li>
+              
+              <li><a href="/tags/2026-03">2026-03</a></li>
+              
+            </ul>
+          </nav>
+          
+          
+        </div>
+      </div>
+
+      
+      
+    </div>
+
+    </article>
+</main>
+<footer>
+  <div style="display:flex"><a class="soc" href="https://github.com/s7fy/" rel="me" title="GitHub"><svg class="feather">
+       <use href="/svg/feather-sprite.51cf5647cb1987f769b616558f2620fd9423d72058490231b391bf6aa3744b55.svg#github" />
+    </svg></a><a class="border"></a><a class="soc" href="https://x.com/s7fyatdesk/" rel="me" title="Twitter"><svg class="feather">
+       <use href="/svg/feather-sprite.51cf5647cb1987f769b616558f2620fd9423d72058490231b391bf6aa3744b55.svg#twitter" />
+    </svg></a><a class="border"></a></div>
+  <div class="footer-info">
+    © 2025 s7fy | <a
+      href="https://github.com/athul/archie">Archie Theme</a> | Built with <a href="https://gohugo.io">Hugo</a>
+  </div>
+</footer>
+
+</div>
+    </body>
+</html>
